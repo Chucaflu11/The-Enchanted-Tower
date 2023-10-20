@@ -1,5 +1,7 @@
 import pygame
 import sys
+import heapq
+
 
 # Inicializa Pygame
 pygame.init()
@@ -25,7 +27,7 @@ MAUVE = (224, 170, 255)
 font = pygame.font.Font(None, 36)
 
 map = {
-    'vertex1': {'vertex2'},
+    'vertex1': {'vertex2'}, #Witch initial point
     'vertex2': {'vertex3'},
     'vertex3': {'vertex4'},
     'vertex4': {'vertex5'},
@@ -52,12 +54,12 @@ map = {
     'vertex25': {'vertex23', 'vertex29'},
     'vertex26': {'vertex23', 'vertex27'},
     'vertex27': {'vertex26', 'vertex28'},
-    'vertex28': {'vertex27', 'vertex30', 'vertex31'},
+    'vertex28': {'vertex27', 'vertex30', 'vertex31'},   #key vertex
     'vertex29': {'vertex25', 'vertex30'},
     'vertex30': {'vertex28', 'vertex29', 'vertex32'},
     'vertex31': {'vertex28', 'vertex33'},
     'vertex32': {'vertex19', 'vertex30'},
-    'vertex33': {'vertex31', 'vertex34', 'vertex35'},
+    'vertex33': {'vertex31', 'vertex34', 'vertex35'},  #key vertex
     'vertex34': {'vertex33', 'vertex37', 'vertex42'},
     'vertex35': {'vertex33', 'vertex36'},
     'vertex36': {'vertex35', 'vertex37'},
@@ -70,6 +72,41 @@ map = {
     'vertex43': {'vertex19', 'vertex41'},
 }
 
+
+def dijkstra(graph, start):
+    # Inicializa las estructuras de datos necesarias
+    visited = set()  # Conjunto de nodos visitados
+    distances = {node: float('inf') for node in graph}  # Distancias iniciales a todos los nodos como infinito
+    distances[start] = 0  # Distancia al nodo de inicio es 0
+    queue = [(0, start)]  # Cola de prioridad con (distancia, nodo)
+
+    while queue:
+        # Obtiene el nodo con la distancia más corta
+        current_distance, current_node = heapq.heappop(queue)
+
+        # Si ya visitamos este nodo, continuamos
+        if current_node in visited:
+            continue
+
+        # Marca el nodo como visitado
+        visited.add(current_node)
+
+        # Explora los nodos vecinos
+        for neighbor, weight in graph[current_node]:
+            distance = current_distance + weight
+
+            # Actualiza la distancia si encontramos un camino más corto
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                heapq.heappush(queue, (distance, neighbor))
+
+    return distances
+
+# Ejemplo de uso
+
+start_node = 'vertex1'
+shortest_distances = dijkstra(map, start_node)
+print(shortest_distances)
 
 
 # Bucle principal
