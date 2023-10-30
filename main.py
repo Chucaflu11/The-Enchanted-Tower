@@ -27,14 +27,14 @@ MAUVE = (224, 170, 255)
 font = pygame.font.Font(None, 36)
 
 map = {
-    'vertex1': {'vertex2'}, #Witch initial point
-    'vertex2': {'vertex3'},
-    'vertex3': {'vertex4'},
-    'vertex4': {'vertex5'},
-    'vertex5': {'vertex6'},
-    'vertex6': {'vertex7'}, #Initial point '1'
-    'vertex7': {'vertex8'},
-    'vertex8': {'vertex9', 'vertex11', 'vertex13'}, #Initial point '3'
+    'vertex1': {'vertex2'}, #witch initial point
+    'vertex2': {'vertex1', 'vertex3'},
+    'vertex3': {'vertex2', 'vertex4'},
+    'vertex4': {'vertex3', 'vertex5'},
+    'vertex5': {'vertex4', 'vertex6'}, 
+    'vertex6': {'vertex5', 'vertex7'}, # Initial point '1'
+    'vertex7': {'vertex6', 'vertex8'},
+    'vertex8': {'vertex9', 'vertex11', 'vertex13', 'vertex7'}, # Initial point '3'
     'vertex9': {'vertex8', 'vertex10'},
     'vertex10': {'vertex9', 'vertex12', 'vertex20'},
     'vertex11': {'vertex8', 'vertex12', 'vertex18', 'vertex19'},
@@ -43,7 +43,7 @@ map = {
     'vertex14': {'vertex13', 'vertex15'},
     'vertex15': {'vertex14', 'vertex16', 'vertex39'},
     'vertex16': {'vertex15', 'vertex17'},
-    'vertex17': {'vertex13','vertex16', 'vertex18', 'vertex40'},
+    'vertex17': {'vertex13', 'vertex16', 'vertex18', 'vertex40'},
     'vertex18': {'vertex11', 'vertex17'},
     'vertex19': {'vertex11', 'vertex20', 'vertex32', 'vertex43'},
     'vertex20': {'vertex10', 'vertex19', 'vertex21'},
@@ -54,12 +54,12 @@ map = {
     'vertex25': {'vertex23', 'vertex29'},
     'vertex26': {'vertex23', 'vertex27'},
     'vertex27': {'vertex26', 'vertex28'},
-    'vertex28': {'vertex27', 'vertex30', 'vertex31'},   #key vertex
+    'vertex28': {'vertex27', 'vertex30', 'vertex31', 'vertex33'}, # Key vertex
     'vertex29': {'vertex25', 'vertex30'},
     'vertex30': {'vertex28', 'vertex29', 'vertex32'},
     'vertex31': {'vertex28', 'vertex33'},
     'vertex32': {'vertex19', 'vertex30'},
-    'vertex33': {'vertex31', 'vertex34', 'vertex35'},  #key vertex
+    'vertex33': {'vertex31', 'vertex34', 'vertex35', 'vertex28'},  # Key vertex
     'vertex34': {'vertex33', 'vertex37', 'vertex42'},
     'vertex35': {'vertex33', 'vertex36'},
     'vertex36': {'vertex35', 'vertex37'},
@@ -73,12 +73,14 @@ map = {
 }
 
 
-def dijkstra(graph, start):
+
+def dijkstra(graph, start, target_nodes):
     # Inicializa las estructuras de datos necesarias
     visited = set()  # Conjunto de nodos visitados
     distances = {node: float('inf') for node in graph}  # Distancias iniciales a todos los nodos como infinito
     distances[start] = 0  # Distancia al nodo de inicio es 0
     queue = [(0, start)]  # Cola de prioridad con (distancia, nodo)
+    paths = {node: [] for node in graph}  # Almacena los caminos hacia cada nodo
 
     while queue:
         # Obtiene el nodo con la distancia más corta
@@ -92,22 +94,27 @@ def dijkstra(graph, start):
         visited.add(current_node)
 
         # Explora los nodos vecinos
-        for neighbor, weight in graph[current_node]:
+        for neighbor in graph[current_node]:
+            # Suponemos un peso de 1 para todas las aristas en este grafo
+            weight = 1
             distance = current_distance + weight
 
             # Actualiza la distancia si encontramos un camino más corto
             if distance < distances[neighbor]:
                 distances[neighbor] = distance
+                paths[neighbor] = paths[current_node] + [current_node]  # Actualiza el camino
                 heapq.heappush(queue, (distance, neighbor))
 
-    return distances
+    result_paths = {node: paths[node] + [node] for node in target_nodes}
+
+    return result_paths
 
 # Ejemplo de uso
 
 start_node = 'vertex1'
-shortest_distances = dijkstra(map, start_node)
-print(shortest_distances)
-
+target_nodes = ['vertex24', 'vertex28', 'vertex33']  # Puedes ajustar los nodos de destino según tus necesidades
+shortest_paths = dijkstra(map, start_node, target_nodes)
+print(shortest_paths)
 
 # Bucle principal
 running = True
