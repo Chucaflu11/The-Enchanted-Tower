@@ -33,7 +33,7 @@ square_size = 330
 margin = 40
 
 # Carga la imagen (asegúrate de tener la imagen en la misma carpeta que tu script)
-image = pygame.image.load("map.png")
+image = pygame.image.load("map.jpeg")
 image = pygame.transform.scale(image, (square_size, square_size))  # Ajusta el tamaño de la imagen
 
 #Dado de 6 caras
