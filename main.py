@@ -133,10 +133,16 @@ def dijkstra(graph, start, target):
     # Si no se encontró un camino al nodo de destino, retornar una lista vacía
     return []
 
+hero_max_moves = 0
+hero_min_moves = 0
+hero_moves = 0
 
 def move_hero(current_position, previous_position, map, roll):
 
+    global hero_max_moves, hero_min_moves, hero_moves
+
     for i in range(roll):
+        hero_moves += 1
         if len(map[current_position]) > 0:
             possible_moves = list(map[current_position])
             try:
@@ -153,12 +159,15 @@ def move_hero(current_position, previous_position, map, roll):
         else:
             print("El héroe ha llegado a una casilla sin opciones de movimiento. Juego terminado.")
             return current_position
-
     return current_position
 
 
+witch_max_moves = 0
+witch_min_moves = 0
+witch_moves = 0
 
 def move_witch(current_position, key_location, map, roll):
+    global witch_max_moves, witch_min_moves, witch_moves
     # Calcular el camino más corto desde la posición actual de la bruja hasta la ubicación de la llave
     shortest_path = dijkstra(map, current_position, key_location)
 
@@ -171,11 +180,15 @@ def move_witch(current_position, key_location, map, roll):
     if blue_movement <= distance_to_key:
         # Si el número azul del dado es menor o igual a la distancia al nodo de destino, avanzar en el camino más corto
         new_position = shortest_path[blue_movement]
+        witch_moves += blue_movement
     else:
         # Si el número azul del dado es mayor que la distancia al nodo de destino, la bruja llega a la ubicación de la llave
         new_position = key_location
+        witch_moves += distance_to_key
+    
 
     return new_position
+
 
 
 #Game loop
@@ -190,13 +203,29 @@ hero_previous_position = 'vertex7'
 
 witch_current_position = 'vertex1'
 
-def reset():
-    global iterations, key, hero_current_position, hero_previous_position, witch_current_position
+def reset(won):
+    global iterations, key, hero_current_position, hero_previous_position, witch_current_position, hero_max_moves, hero_min_moves, hero_moves, witch_max_moves, witch_min_moves, witch_moves
     iterations += 1
     key = random.choice(['vertex24', 'vertex28', 'vertex33'])
     hero_current_position = 'vertex8'
     hero_previous_position = 'vertex7'
     witch_current_position = 'vertex1'
+
+    if(won == 'hero'):
+        if(hero_max_moves < hero_moves):
+            hero_max_moves = hero_moves
+        if(hero_min_moves == 0 or hero_min_moves > hero_moves):
+            hero_min_moves = hero_moves
+
+    hero_moves = 0
+    
+    if(won == 'witch'):
+        if(witch_max_moves < witch_moves):
+                witch_max_moves = witch_moves
+        if(witch_min_moves == 0 or witch_min_moves > witch_moves):
+            witch_min_moves = witch_moves
+
+    witch_moves = 0
 
 def game_movement():
     global hero_current_position, hero_previous_position, witch_current_position
@@ -213,14 +242,13 @@ def game_movement():
     
 def game_loop():
     global running, hero_wins, witch_wins
-    #Retorna 1 si gana el héroe, 0 si gana la bruja, 2 mientras se siga ejecutando.
     game_movement()
     if(hero_current_position == key):
         hero_wins += 1
-        reset()
+        reset('hero')
     elif(witch_current_position == key):
         witch_wins += 1
-        reset()
+        reset('witch')
 
 
 screen.fill(RUSSIAN_VIOLET)
@@ -245,8 +273,8 @@ while running:
     #Se ejecuta el juego 5000 veces
     while(iterations < 500):
         game_loop()
-    print("Hero wins: ", hero_wins)
-    print("Witch wins: ", witch_wins)
+    print(f"Hero wins: {hero_wins}; Hero max moves: {hero_max_moves}; Hero min moves: {hero_min_moves}")
+    print(f"Witch wins: {witch_wins}; Witch max moves: {witch_max_moves}; Witch min moves: {witch_min_moves}")
     running = False
     
 
