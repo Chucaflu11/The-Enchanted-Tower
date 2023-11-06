@@ -142,9 +142,9 @@ def move_hero(current_position, previous_position, map, roll):
             try:
                 possible_moves.remove(previous_position)
             except ValueError:
-                print("The previous_position is not in the list of possible moves.")
-
-            #print("Possible moves: ", possible_moves)
+                pass
+                #print("The previous_position is not in the list of possible moves.")
+            
             previous_position = current_position
             if(current_position == 'vertex24'):
                 current_position = 'vertex23'
@@ -161,7 +161,6 @@ def move_hero(current_position, previous_position, map, roll):
 def move_witch(current_position, key_location, map, roll):
     # Calcular el camino más corto desde la posición actual de la bruja hasta la ubicación de la llave
     shortest_path = dijkstra(map, current_position, key_location)
-    print(f"Camino más corto: {shortest_path}")
 
     # Obtener la distancia al nodo de destino (ubicación de la llave)
     distance_to_key = len(shortest_path) - 1
@@ -180,36 +179,49 @@ def move_witch(current_position, key_location, map, roll):
 
 
 #Game loop
+iterations = 0
 key = random.choice(['vertex24', 'vertex28', 'vertex33'])
 
-hero_current_position = 'vertex6'
-hero_previous_position = 'vertex5'
+hero_wins = 0
+witch_wins = 0
+
+hero_current_position = 'vertex8'
+hero_previous_position = 'vertex7'
 
 witch_current_position = 'vertex1'
 
-def game_loop():
-    global hero_current_position, hero_previous_position, witch_current_position
+def reset():
+    global iterations, key, hero_current_position, hero_previous_position, witch_current_position
+    iterations += 1
+    key = random.choice(['vertex24', 'vertex28', 'vertex33'])
+    hero_current_position = 'vertex8'
+    hero_previous_position = 'vertex7'
+    witch_current_position = 'vertex1'
 
-    if(hero_previous_position == 'vertex6' and hero_current_position != 'vertex7'): #Error handling (En primera iteración la posición previa queda igual que la actual por algún motivo)
-        hero_previous_position = 'vertex5'
+def game_movement():
+    global hero_current_position, hero_previous_position, witch_current_position
     
     roll = random.choice(dice)
 
-    print(f"Dado: {roll}")
     hero_new_position = move_hero(hero_current_position, hero_previous_position, map, roll[1])
-    print(f"Héroe: {hero_current_position} -> {hero_new_position}")
-
+    hero_previous_position = hero_current_position
+    hero_current_position = hero_new_position
 
     witch_current_position = move_witch(witch_current_position, key, map, roll[0])
-    print(f"Bruja: {witch_current_position}")
 
-    if(roll[0] != 0):
-        hero_previous_position = hero_current_position
-        hero_current_position = hero_new_position
-    if(hero_new_position == key):
-        return 1
+        
+    
+def game_loop():
+    global running, hero_wins, witch_wins
+    #Retorna 1 si gana el héroe, 0 si gana la bruja, 2 mientras se siga ejecutando.
+    game_movement()
+    if(hero_current_position == key):
+        hero_wins += 1
+        reset()
     elif(witch_current_position == key):
-        return 0
+        witch_wins += 1
+        reset()
+
 
 screen.fill(RUSSIAN_VIOLET)
 pygame.display.flip()
@@ -230,16 +242,12 @@ while running:
     # Actualiza la pantalla
     pygame.display.flip()
 
-    #game loop
-    #Retorna 1 si gana el héroe, 0 si gana la bruja, 2 mientras se siga ejecutando.
-    print("loop")
-    game_loop()
-    if(hero_current_position == key):
-        running = False
-        print("El héroe ha encontrado la llave. ¡Gana el juego!")
-    elif(witch_current_position == key):
-        running = False
-        print("La bruja ha encontrado la llave. ¡Pierde el juego!")
+    #Se ejecuta el juego 5000 veces
+    while(iterations < 500):
+        game_loop()
+    print("Hero wins: ", hero_wins)
+    print("Witch wins: ", witch_wins)
+    running = False
     
 
 # Cierra Pygame
