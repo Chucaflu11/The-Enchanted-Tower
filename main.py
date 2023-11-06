@@ -3,6 +3,8 @@ import random
 import sys
 import heapq
 
+import time
+
 
 # Inicializa Pygame
 pygame.init()
@@ -75,12 +77,12 @@ map = {
     'vertex25': {'vertex23', 'vertex29'},
     'vertex26': {'vertex23', 'vertex27'},
     'vertex27': {'vertex26', 'vertex28'},
-    'vertex28': {'vertex27', 'vertex30', 'vertex31', 'vertex33'}, # Key vertex
+    'vertex28': {'vertex27', 'vertex30', 'vertex31'}, # Key vertex
     'vertex29': {'vertex25', 'vertex30'},
     'vertex30': {'vertex28', 'vertex29', 'vertex32'},
     'vertex31': {'vertex28', 'vertex33'},
     'vertex32': {'vertex19', 'vertex30'},
-    'vertex33': {'vertex31', 'vertex34', 'vertex35', 'vertex28'},  # Key vertex
+    'vertex33': {'vertex31', 'vertex34', 'vertex35'},  # Key vertex
     'vertex34': {'vertex33', 'vertex37', 'vertex42'},
     'vertex35': {'vertex33', 'vertex36'},
     'vertex36': {'vertex35', 'vertex37'},
@@ -93,7 +95,7 @@ map = {
     'vertex43': {'vertex19', 'vertex41'},
 }
 
-def dijkstra(graph, start, target_nodes):
+def dijkstra(graph, start, target):
     # Inicializa las estructuras de datos necesarias
     visited = set()  # Conjunto de nodos visitados
     distances = {node: float('inf') for node in graph}  # Distancias iniciales a todos los nodos como infinito
@@ -112,6 +114,10 @@ def dijkstra(graph, start, target_nodes):
         # Marca el nodo como visitado
         visited.add(current_node)
 
+        # Si alcanzamos el nodo de destino, retornamos el camino más corto
+        if current_node == target:
+            return paths[current_node] + [current_node]
+
         # Explora los nodos vecinos
         for neighbor in graph[current_node]:
             # Suponemos un peso de 1 para todas las aristas en este grafo
@@ -124,89 +130,86 @@ def dijkstra(graph, start, target_nodes):
                 paths[neighbor] = paths[current_node] + [current_node]  # Actualiza el camino
                 heapq.heappush(queue, (distance, neighbor))
 
-    result_paths = {node: paths[node] + [node] for node in target_nodes}
-
-    return result_paths
-
-# Ejemplo de uso
-start_node = 'vertex1'
-target_nodes = ['vertex24', 'vertex28', 'vertex33']  # Puedes ajustar los nodos de destino según tus necesidades
-shortest_paths = dijkstra(map, start_node, target_nodes)
-print(shortest_paths)
+    # Si no se encontró un camino al nodo de destino, retornar una lista vacía
+    return []
 
 
-def move_hero(current_position, previous_position, map):
-    # Simular el lanzamiento del dado y obtener el número rojo
+def move_hero(current_position, previous_position, map, roll):
 
-    red_die_roll = random.choice(dice)
-
-    for i in range(red_die_roll[0]):
-        if len(map[current_position]) > 1:
+    for i in range(roll):
+        if len(map[current_position]) > 0:
             possible_moves = list(map[current_position])
-            possible_moves.remove(previous_position)
+            try:
+                possible_moves.remove(previous_position)
+            except ValueError:
+                print("The previous_position is not in the list of possible moves.")
 
-            if current_position in ['vertex24', 'vertex28', 'vertex33']:
-                if current_position == 'vertex24':
-                    key_location = 'vertex24'
-                elif current_position == 'vertex28':
-                    key_location = 'vertex28'
-                elif current_position == 'vertex33':
-                    key_location = 'vertex33'
-
-                if key_location == key_location:
-                    print(f"El héroe ha encontrado la llave en {key_location}. ¡Gana el juego!")
-                    return current_position
-                else:
-                    print(f"El héroe ha llegado a {current_position} pero no encontró la llave. Continúa.")
-            else:
-                print(f"El héroe se encuentra en {current_position}. Continúa moviéndose.")
-            
+            #print("Possible moves: ", possible_moves)
             previous_position = current_position
-            current_position = random.choice(possible_moves)
+            if(current_position == 'vertex24'):
+                current_position = 'vertex23'
+            else:
+                current_position = random.choice(possible_moves)
         else:
             print("El héroe ha llegado a una casilla sin opciones de movimiento. Juego terminado.")
             return current_position
 
     return current_position
 
-# Ejemplo de uso
-current_position = 'vertex1'
-previous_position = 'vertex6'
-new_position = move_hero(current_position, previous_position, map)
 
 
-def move_witch(current_position, map):
-    # Simular el lanzamiento del dado y obtener el número azul
+def move_witch(current_position, key_location, map, roll):
+    # Calcular el camino más corto desde la posición actual de la bruja hasta la ubicación de la llave
+    shortest_path = dijkstra(map, current_position, key_location)
+    print(f"Camino más corto: {shortest_path}")
 
-    blue_die_roll = random.choice(dice)
+    # Obtener la distancia al nodo de destino (ubicación de la llave)
+    distance_to_key = len(shortest_path) - 1
 
-    # Determinar las posibles ubicaciones de la llave
-    possible_key_locations = ['vertex24', 'vertex28', 'vertex33']
+    # Determinar el movimiento de la bruja según el número azul del dado
+    blue_movement = roll
 
-    # Calcular los caminos más cortos desde la posición actual de la bruja a cada posible ubicación de la llave
-    start_node = 'vertex1'
-    target_nodes = ['vertex24', 'vertex28', 'vertex33'] 
-    shortest_paths = dijkstra(map, start_node, target_nodes)
-    for key_location in possible_key_locations:
-        shortest_paths[key_location] = dijkstra(map, current_position, key_location)
-
-    # Elegir la ubicación de la llave con el camino más corto
-    key_location = min(possible_key_locations, key=lambda location: len(shortest_paths[location]))
-
-    # Mover la bruja hacia la ubicación de la llave con el camino más corto
-    if len(shortest_paths[key_location]) > blue_die_roll[0]:
-        # Si el camino es más largo que el movimiento de la bruja, limita el movimiento al camino
-        next_position = shortest_paths[key_location][blue_die_roll[0]]
+    if blue_movement <= distance_to_key:
+        # Si el número azul del dado es menor o igual a la distancia al nodo de destino, avanzar en el camino más corto
+        new_position = shortest_path[blue_movement]
     else:
-        # Si el camino es igual o más corto que el movimiento de la bruja, llega a la ubicación de la llave
-        next_position = key_location
+        # Si el número azul del dado es mayor que la distancia al nodo de destino, la bruja llega a la ubicación de la llave
+        new_position = key_location
 
-    # Devolver la nueva posición de la bruja
-    return next_position
+    return new_position
 
-# Ejemplo de uso
-current_position = 'vertex1'
-new_position = move_witch(current_position, map)
+
+#Game loop
+key = random.choice(['vertex24', 'vertex28', 'vertex33'])
+
+hero_current_position = 'vertex6'
+hero_previous_position = 'vertex5'
+
+witch_current_position = 'vertex1'
+
+def game_loop():
+    global hero_current_position, hero_previous_position, witch_current_position
+
+    if(hero_previous_position == 'vertex6' and hero_current_position != 'vertex7'): #Error handling (En primera iteración la posición previa queda igual que la actual por algún motivo)
+        hero_previous_position = 'vertex5'
+    
+    roll = random.choice(dice)
+
+    print(f"Dado: {roll}")
+    hero_new_position = move_hero(hero_current_position, hero_previous_position, map, roll[1])
+    print(f"Héroe: {hero_current_position} -> {hero_new_position}")
+
+
+    witch_current_position = move_witch(witch_current_position, key, map, roll[0])
+    print(f"Bruja: {witch_current_position}")
+
+    if(roll[0] != 0):
+        hero_previous_position = hero_current_position
+        hero_current_position = hero_new_position
+    if(hero_new_position == key):
+        return 1
+    elif(witch_current_position == key):
+        return 0
 
 screen.fill(RUSSIAN_VIOLET)
 pygame.display.flip()
@@ -226,6 +229,18 @@ while running:
 
     # Actualiza la pantalla
     pygame.display.flip()
+
+    #game loop
+    #Retorna 1 si gana el héroe, 0 si gana la bruja, 2 mientras se siga ejecutando.
+    print("loop")
+    game_loop()
+    if(hero_current_position == key):
+        running = False
+        print("El héroe ha encontrado la llave. ¡Gana el juego!")
+    elif(witch_current_position == key):
+        running = False
+        print("La bruja ha encontrado la llave. ¡Pierde el juego!")
+    
 
 # Cierra Pygame
 pygame.quit()
