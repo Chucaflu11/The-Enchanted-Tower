@@ -132,7 +132,10 @@ def create_bar_chart_image(data, width, height):
     y_labels = []
     num_labels = min(y_scale // 20 + 1, 11)  # Máximo de 10 etiquetas + 0
     for i in range(num_labels):
-        label = y_scale * i // (num_labels - 1)
+        if(num_labels>1):
+            label = y_scale * i // (num_labels - 1)
+        else:
+            label = y_scale * i // (num_labels)
         y_labels.append(label)
 
     for label in y_labels:
@@ -290,18 +293,31 @@ def game_movement():
 
     witch_current_position = move_witch(witch_current_position, key, map, roll[0])
 
-        
+#Creating Graphics
+def generate_graphs(h_wins, w_wins):
+    pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, ((margin*2 + square_size), margin, screen_width - (margin*3 + square_size), square_size))  # Rectángulo superior derecho
+    #Size of the image for the graphics
+    bar_width = screen_width - (margin*3 + square_size)
+    bar_height = square_size
+    data = [h_wins, w_wins]
+
+    chart_surface = create_bar_chart_image(data, bar_width, bar_height)
+    screen.blit(chart_surface, ((margin*2 + square_size), margin))
+    pygame.display.flip()
+
+      
 #Basic game loop    
 def game_loop():
     global running, hero_wins, witch_wins
     game_movement()
     if(hero_current_position == key):
         hero_wins += 1
+        generate_graphs(hero_wins, witch_wins)
         reset('hero')
     elif(witch_current_position == key):
         witch_wins += 1
+        generate_graphs(hero_wins, witch_wins)
         reset('witch')
-
 
 screen.fill(RUSSIAN_VIOLET)
 pygame.display.flip()
@@ -315,7 +331,7 @@ while running:
     
      # Dibuja los elementos en sus posiciones
     screen.blit(image, (margin, margin))  # Cuadrado superior izquierdo
-    pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, ((margin*2 + square_size), margin, screen_width - (margin*3 + square_size), square_size))  # Rectángulo superior derecho
+    #pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, ((margin*2 + square_size), margin, screen_width - (margin*3 + square_size), square_size))  # Rectángulo superior derecho
     pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (margin, margin * 2 + square_size, (screen_width-(margin*3))/2, screen_height-(margin*3+square_size)))  # left-down rectangle
     pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (margin*2+(screen_width-(margin*3))/2, margin * 2 + square_size, (screen_width-(margin*3))/2, screen_height-(margin*3+square_size)))  # Rectángulo inferior derecho
 
@@ -327,7 +343,7 @@ while running:
         game_loop()
     print(f"Hero wins: {hero_wins}; Hero max moves: {hero_max_moves}; Hero min moves: {hero_min_moves}")
     print(f"Witch wins: {witch_wins}; Witch max moves: {witch_max_moves}; Witch min moves: {witch_min_moves}")
-    running = False
+    #running = False
     
 
 # Cierra Pygame
