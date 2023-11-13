@@ -3,8 +3,6 @@ import random
 import sys
 import heapq
 
-import time
-
 
 # Inicializa Pygame
 pygame.init()
@@ -95,6 +93,57 @@ map = {
     'vertex43': {'vertex19', 'vertex41'},
 }
 
+# Función para crear una imagen de gráfico de barras
+def create_bar_chart_image(data, width, height):
+    chart_image = pygame.Surface((width, height))
+    chart_image.fill((60, 9, 108))  # Rellenar el fondo con blanco
+
+    font = pygame.font.Font(None, 12)  # Tamaño de fuente 12
+
+    bar_width = 20
+    gap = 10
+    x = 60  # Desplazado a la derecha
+    y = height - 50
+
+    max_data = max(data)
+    y_scale = 10 * ((max_data // 10) + 1)  # Escala el eje Y para que el número máximo calce
+
+    # Dibujar ejes X e Y
+    pygame.draw.line(chart_image, (0, 0, 0), (60, y), (width - 60, y), 2)  # Eje X
+    pygame.draw.line(chart_image, (0, 0, 0), (60, 50), (60, y), 2)  # Eje Y
+
+    for i, value in enumerate(data):
+        if i % 2 == 0:  # Añadir un espacio doble antes de cada grupo de 2 barras
+            x += 2 * gap
+
+        bar_height = (value / y_scale) * (y - 50)  # Ajustar la altura de la barra
+        pygame.draw.rect(chart_image, (224, 170, 255), (x, y - bar_height, bar_width, bar_height))
+
+        # Agregar etiqueta de datos en la parte inferior de la barra
+        text = font.render(str(value), True, (0, 0, 0))
+        text_rect = text.get_rect()
+        text_rect.center = (x + bar_width / 2, y + 10)
+        chart_image.blit(text, text_rect)
+
+        x += bar_width + gap
+
+    # Ajustar el número de etiquetas en el eje Y para evitar superposiciones
+    y_scale = max(data)
+    y_labels = []
+    num_labels = min(y_scale // 20 + 1, 11)  # Máximo de 10 etiquetas + 0
+    for i in range(num_labels):
+        label = y_scale * i // (num_labels - 1)
+        y_labels.append(label)
+
+    for label in y_labels:
+        text = font.render(str(label), True, (0, 0, 0))
+        text_rect = text.get_rect()
+        text_rect.center = (30, height - 50 - (label / y_scale) * (height - 100))
+        chart_image.blit(text, text_rect)
+
+    return chart_image
+
+# Camino de la bruja
 def dijkstra(graph, start, target):
     # Inicializa las estructuras de datos necesarias
     visited = set()  # Conjunto de nodos visitados
@@ -133,6 +182,7 @@ def dijkstra(graph, start, target):
     # Si no se encontró un camino al nodo de destino, retornar una lista vacía
     return []
 
+#Hero movement
 hero_max_moves = 0
 hero_min_moves = 0
 hero_moves = 0
@@ -161,7 +211,7 @@ def move_hero(current_position, previous_position, map, roll):
             return current_position
     return current_position
 
-
+#Witch movement
 witch_max_moves = 0
 witch_min_moves = 0
 witch_moves = 0
@@ -203,6 +253,7 @@ hero_previous_position = 'vertex7'
 
 witch_current_position = 'vertex1'
 
+#Reset game
 def reset(won):
     global iterations, key, hero_current_position, hero_previous_position, witch_current_position, hero_max_moves, hero_min_moves, hero_moves, witch_max_moves, witch_min_moves, witch_moves
     iterations += 1
@@ -227,6 +278,7 @@ def reset(won):
 
     witch_moves = 0
 
+#Initialize game
 def game_movement():
     global hero_current_position, hero_previous_position, witch_current_position
     
@@ -239,7 +291,7 @@ def game_movement():
     witch_current_position = move_witch(witch_current_position, key, map, roll[0])
 
         
-    
+#Basic game loop    
 def game_loop():
     global running, hero_wins, witch_wins
     game_movement()
