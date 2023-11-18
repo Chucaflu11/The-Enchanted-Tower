@@ -3,9 +3,13 @@ import random
 import sys
 import heapq
 
+from coordinates import coordinates
+
 
 # Inicializa Pygame
 pygame.init()
+
+clock = pygame.time.Clock()
 
 # Colores
 WHITE = (255, 255, 255)
@@ -33,8 +37,12 @@ square_size = 330
 margin = 40
 
 # Carga la imagen (asegúrate de tener la imagen en la misma carpeta que tu script)
-image = pygame.image.load("map.jpeg")
-image = pygame.transform.scale(image, (square_size, square_size))  # Ajusta el tamaño de la imagen
+map_image = pygame.image.load("map.jpg")
+map_image = pygame.transform.scale(map_image, (square_size, square_size))  # Ajusta el tamaño de la imagen
+hero_image = pygame.image.load("heroe.png")
+hero_image = pygame.transform.scale(hero_image, (20, 20))
+witch_image = pygame.image.load("bruja.png")
+witch_image = pygame.transform.scale(witch_image, (20, 20))
 
 #Dado de 6 caras
 dice = [
@@ -72,14 +80,13 @@ map = {
     'vertex22': {'vertex21', 'vertex23'},
     'vertex23': {'vertex22', 'vertex24', 'vertex25', 'vertex26'},
     'vertex24': {'vertex23'}, # Key vertex
-    'vertex25': {'vertex23', 'vertex29'},
+    'vertex25': {'vertex23', 'vertex30'},
     'vertex26': {'vertex23', 'vertex27'},
     'vertex27': {'vertex26', 'vertex28'},
     'vertex28': {'vertex27', 'vertex30', 'vertex31'}, # Key vertex
-    'vertex29': {'vertex25', 'vertex30'},
-    'vertex30': {'vertex28', 'vertex29', 'vertex32'},
-    'vertex31': {'vertex28', 'vertex33'},
-    'vertex32': {'vertex19', 'vertex30'},
+    'vertex30': {'vertex25','vertex28', 'vertex32'},
+    'vertex31': {'vertex28', 'vertex33', 'vertex32'},
+    'vertex32': {'vertex19', 'vertex30', 'vertex31'},
     'vertex33': {'vertex31', 'vertex34', 'vertex35'},  # Key vertex
     'vertex34': {'vertex33', 'vertex37', 'vertex42'},
     'vertex35': {'vertex33', 'vertex36'},
@@ -93,16 +100,24 @@ map = {
     'vertex43': {'vertex19', 'vertex41'},
 }
 
-# Función para crear una imagen de gráfico de barras
+game_running = True
+total_games = 1
+
+#Funcion para crear imagenes de graficos de barras
 def create_bar_chart_image(data, width, height):
     chart_image = pygame.Surface((width, height))
-    chart_image.fill((60, 9, 108))  # Rellenar el fondo con blanco
+    chart_image.fill((60, 9, 108))  # Rellenar el fondo con un color
 
     font = pygame.font.Font(None, 12)  # Tamaño de fuente 12
 
-    bar_width = 20
-    gap = 10
-    x = 60  # Desplazado a la derecha
+    num_values = len(data)
+    num_groups = num_values // 2  # Calcula la cantidad de grupos de barras
+    total_gap = width - 120  # Espacio total disponible para los grupos de barras
+    bar_width = total_gap // (6 * num_groups + 1)  # Calcula el ancho de cada barra
+    gap = bar_width // 2  # Espacio entre barras dentro de un grupo
+    group_space = 3 * gap + 2 * bar_width  # Espacio total ocupado por un grupo de barras
+
+    x = gap + 60  # Desplazado a la derecha
     y = height - 50
 
     max_data = max(data)
@@ -112,27 +127,33 @@ def create_bar_chart_image(data, width, height):
     pygame.draw.line(chart_image, (0, 0, 0), (60, y), (width - 60, y), 2)  # Eje X
     pygame.draw.line(chart_image, (0, 0, 0), (60, 50), (60, y), 2)  # Eje Y
 
-    for i, value in enumerate(data):
-        if i % 2 == 0:  # Añadir un espacio doble antes de cada grupo de 2 barras
-            x += 2 * gap
+    for i in range(num_groups):
+        x += i * group_space  # Ajusta el desplazamiento para cada grupo
 
-        bar_height = (value / y_scale) * (y - 50)  # Ajustar la altura de la barra
-        pygame.draw.rect(chart_image, (224, 170, 255), (x, y - bar_height, bar_width, bar_height))
+        for j in range(2):  # Dos barras por grupo
+            bar_height = (data[2*i + j] / y_scale) * (y - 50)  # Ajustar la altura de la barra
+            pygame.draw.rect(chart_image, (224, 170, 255), (x, y - bar_height, bar_width, bar_height))
 
-        # Agregar etiqueta de datos en la parte inferior de la barra
-        text = font.render(str(value), True, (0, 0, 0))
-        text_rect = text.get_rect()
-        text_rect.center = (x + bar_width / 2, y + 10)
-        chart_image.blit(text, text_rect)
+            # Agregar etiqueta de datos en la parte inferior de la barra
+            text = font.render(str(data[2*i + j]), True, (0, 0, 0))
+            text_rect = text.get_rect()
+            text_rect.center = (x + bar_width / 2, y + 10)
+            chart_image.blit(text, text_rect)
 
-        x += bar_width + gap
+            x += bar_width + gap  # Ajuste de posición para la siguiente barra dentro del grupo
 
-    # Ajustar el número de etiquetas en el eje Y para evitar superposiciones
     y_scale = max(data)
+
+    if all(value == 0 for value in data):
+        y_scale = 1  # Establecer y_scale en 1 si todos son cero
+
     y_labels = []
     num_labels = min(y_scale // 20 + 1, 11)  # Máximo de 10 etiquetas + 0
     for i in range(num_labels):
-        label = y_scale * i // (num_labels - 1)
+        if (num_labels > 1):
+            label = y_scale * i // (num_labels - 1)
+        else:
+            label = y_scale * i // (num_labels)
         y_labels.append(label)
 
     for label in y_labels:
@@ -142,6 +163,7 @@ def create_bar_chart_image(data, width, height):
         chart_image.blit(text, text_rect)
 
     return chart_image
+
 
 # Camino de la bruja
 def dijkstra(graph, start, target):
@@ -248,8 +270,8 @@ key = random.choice(['vertex24', 'vertex28', 'vertex33'])
 hero_wins = 0
 witch_wins = 0
 
-hero_current_position = 'vertex8'
-hero_previous_position = 'vertex7'
+hero_current_position = 'vertex6'
+hero_previous_position = 'vertex5'
 
 witch_current_position = 'vertex1'
 
@@ -278,30 +300,86 @@ def reset(won):
 
     witch_moves = 0
 
+def draw_players():
+    
+    screen.blit(map_image, (margin, margin))  # Limpiar mapa
+    screen.blit(hero_image, coordinates[hero_current_position])
+    screen.blit(witch_image, coordinates[witch_current_position])
+    pygame.display.flip()
+
+
 #Initialize game
 def game_movement():
     global hero_current_position, hero_previous_position, witch_current_position
     
     roll = random.choice(dice)
 
+    draw_players()
     hero_new_position = move_hero(hero_current_position, hero_previous_position, map, roll[1])
     hero_previous_position = hero_current_position
     hero_current_position = hero_new_position
 
     witch_current_position = move_witch(witch_current_position, key, map, roll[0])
 
-        
+#Creating Graphics
+def generate_graphs(data):
+    pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, ((margin*2 + square_size), margin, screen_width - (margin*3 + square_size), square_size))  # Rectángulo superior derecho
+    #Size of the image for the graphics
+    bar_width = (screen_width - (margin*3 + square_size)) - 200
+    bar_height = square_size
+
+    chart_surface = create_bar_chart_image(data, bar_width, bar_height)
+    screen.blit(chart_surface, ((margin*2 + square_size), margin))
+    pygame.display.flip()
+
+def reset_game_loop():
+    global iterations, hero_current_position, hero_previous_position, total_games, game_running, hero_wins, witch_wins
+    iterations = 0
+    if(total_games == 1):
+        hero_current_position = 'vertex7'
+        hero_previous_position = 'vertex6'
+    elif(total_games == 2):
+        hero_current_position = 'vertex8'
+        hero_previous_position = 'vertex7'
+    elif(total_games == 3):
+        game_running = False
+    total_games += 1
+
+    hero_wins = 0
+    witch_wins = 0
+
+
+wins = [0, 0, 0, 0, 0, 0]
 #Basic game loop    
 def game_loop():
-    global running, hero_wins, witch_wins
+    global running, hero_wins, witch_wins, wins
     game_movement()
     if(hero_current_position == key):
         hero_wins += 1
+        if(total_games == 1):
+            wins[0] = hero_wins
+            wins[1] = witch_wins
+        elif(total_games == 2):
+            wins[2] = hero_wins
+            wins[3] = witch_wins
+        elif(total_games == 3):
+            wins[4] = hero_wins
+            wins[5] = witch_wins
+        generate_graphs(wins)
         reset('hero')
     elif(witch_current_position == key):
         witch_wins += 1
+        if(total_games == 1):
+            wins[0] = hero_wins
+            wins[1] = witch_wins
+        elif(total_games == 2):
+            wins[2] = hero_wins
+            wins[3] = witch_wins
+        elif(total_games == 3):
+            wins[4] = hero_wins
+            wins[5] = witch_wins
+        generate_graphs(wins)
         reset('witch')
-
 
 screen.fill(RUSSIAN_VIOLET)
 pygame.display.flip()
@@ -312,10 +390,10 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    
+
      # Dibuja los elementos en sus posiciones
-    screen.blit(image, (margin, margin))  # Cuadrado superior izquierdo
-    pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, ((margin*2 + square_size), margin, screen_width - (margin*3 + square_size), square_size))  # Rectángulo superior derecho
+    screen.blit(map_image, (margin, margin))  # Cuadrado superior izquierdo
+    #pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, ((margin*2 + square_size), margin, screen_width - (margin*3 + square_size), square_size))  # Rectángulo superior derecho
     pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (margin, margin * 2 + square_size, (screen_width-(margin*3))/2, screen_height-(margin*3+square_size)))  # left-down rectangle
     pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (margin*2+(screen_width-(margin*3))/2, margin * 2 + square_size, (screen_width-(margin*3))/2, screen_height-(margin*3+square_size)))  # Rectángulo inferior derecho
 
@@ -325,9 +403,9 @@ while running:
     #Se ejecuta el juego 5000 veces
     while(iterations < 500):
         game_loop()
-    print(f"Hero wins: {hero_wins}; Hero max moves: {hero_max_moves}; Hero min moves: {hero_min_moves}")
-    print(f"Witch wins: {witch_wins}; Witch max moves: {witch_max_moves}; Witch min moves: {witch_min_moves}")
-    running = False
+    if(game_running):
+        reset_game_loop()
+    #running = False
     
 
 # Cierra Pygame
