@@ -10,8 +10,6 @@ from coordinates import coordinates
 from charts import create_bar_chart_image
 from setup import *
 
-from icecream import ic
-
 # Inicializa Pygame
 pygame.init()
 
@@ -88,7 +86,6 @@ class Hero():
                     except IndexError:
                         pass
             else:
-                print("El héroe ha llegado a una casilla sin opciones de movimiento. Juego terminado.")
                 return self.current_position
         return self.current_position
 
@@ -106,9 +103,9 @@ class Witch():
     def move(self, map, roll, key_location):
         if(self.current_position == key_location):
             return self.current_position
+        self.moves += 1
         # Calcular el camino más corto desde la posición actual de la bruja hasta la ubicación de la llave
         shortest_path = dijkstra(map, self.current_position, key_location)
-
         # Obtener la distancia al nodo de destino (ubicación de la llave)
         distance_to_key = len(shortest_path) - 1
 
@@ -118,11 +115,9 @@ class Witch():
         if blue_movement <= distance_to_key:
             # Si el número azul del dado es menor o igual a la distancia al nodo de destino, avanzar en el camino más corto
             new_position = shortest_path[blue_movement]
-            self.moves += blue_movement
         else:
             # Si el número azul del dado es mayor que la distancia al nodo de destino, la bruja llega a la ubicación de la llave
             new_position = key_location
-            self.moves += distance_to_key
 
         return new_position
 
@@ -152,21 +147,23 @@ class GameInstance():
         self.hero = Hero('vertex6', 'vertex5')
         self.witch = Witch('vertex1', 'vertex0')
 
-    def compare_moves(self):
+    def compare_moves(self, won):
         hero_moves = self.hero.getMoves()
         witch_moves = self.witch.getMoves()
-        if(self.hero_min_moves == 0):
-            self.hero_min_moves = hero_moves
-        elif(hero_moves < self.hero_min_moves):
-            self.hero_min_moves = hero_moves
-        if(hero_moves > self.hero_max_moves):
-            self.hero_max_moves = hero_moves
-        if(self.witch_min_moves == 0):
-            self.witch_min_moves = witch_moves
-        elif(witch_moves < self.witch_min_moves):
-            self.witch_min_moves = witch_moves
-        if(witch_moves > self.witch_max_moves):
-            self.witch_max_moves = witch_moves
+        if(won == 'hero'):
+            if(self.hero_min_moves == 0):
+                self.hero_min_moves = hero_moves
+            elif(hero_moves < self.hero_min_moves):
+                self.hero_min_moves = hero_moves
+            if(hero_moves > self.hero_max_moves):
+                self.hero_max_moves = hero_moves
+        elif(won == 'witch'):
+            if(self.witch_min_moves == 0):
+                self.witch_min_moves = witch_moves
+            elif(witch_moves < self.witch_min_moves):
+                self.witch_min_moves = witch_moves
+            if(witch_moves > self.witch_max_moves):
+                self.witch_max_moves = witch_moves
 
     def draw_data(self):
         iteration_text = font.render("Iteración: " + str(self.iterations), True, WHITE)
@@ -226,9 +223,9 @@ class GameInstance():
         screen.blit(hero_moves_text, hero_moves_text_rect)
         screen.blit(witch_moves_text, witch_moves_text_rect)
 
-    def reset(self):
+    def reset(self, won):
         self.iterations += 1
-        self.compare_moves()
+        self.compare_moves(won)
 
         self.draw_data()
 
@@ -322,13 +319,13 @@ class GameInstance():
             self.wins[self.total_games * 2] = self.hero_wins
             self.wins[self.total_games * 2 + 1] = self.witch_wins
             self.generate_graphs(self.wins)
-            self.reset()
+            self.reset('hero')
         elif(self.witch.current_position == self.key):
             self.witch_wins += 1
             self.wins[self.total_games * 2] = self.hero_wins
             self.wins[self.total_games * 2 + 1] = self.witch_wins
             self.generate_graphs(self.wins)
-            self.reset()
+            self.reset('witch')
 
     def game(self):
         if(self.game_running):
@@ -339,17 +336,6 @@ class GameInstance():
     def get_game_state(self):
         return self.game_running
 
-
-screen.fill(RUSSIAN_VIOLET_LIGHT)
-
-# Dibuja los elementos en sus posiciones
-screen.blit(map_image, (margin, margin))  # Cuadrado superior izquierdo
-#pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, ((margin*2 + square_size), margin, screen_width - (margin*3 + square_size), square_size))  # Rectángulo superior derecho
-#pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (margin, margin * 2 + square_size, (screen_width-(margin*3))/2, screen_height-(margin*3+square_size)))  # left-down rectangle
-#pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (margin*2+(screen_width-(margin*3))/2, margin * 2 + square_size, (screen_width-(margin*3))/2, screen_height-(margin*3+square_size)))  # Rectángulo inferior derecho
-pygame.display.flip()
-
-
 def main(mod):
     global g_iter
     if(mod == 1):
@@ -357,30 +343,32 @@ def main(mod):
             game.game()
         if(not game.get_game_state()):
             mod += 1
-            g_iter = 10
     if(mod == 2):
         if(game_mod.iterations <= g_iter):
             game_mod.game()
         if(not game_mod.get_game_state()):
             mod += 1
-            g_iter = 10
     if(mod == 3):
         if(game_mod2.iterations <= g_iter):
             game_mod2.game()
         if(not game_mod2.get_game_state()):
             mod += 1
-            g_iter = 10
     if(mod == 4):
         if(game_mod3.iterations <= g_iter):
             game_mod3.game()
         if(not game_mod3.get_game_state()):
             mod += 1
-            g_iter = 10
 
 
     return mod
 
+
+# Inicializa la ventana
 if __name__ == "__main__":
+    screen.fill(RUSSIAN_VIOLET_LIGHT)
+    screen.blit(map_image, (margin, margin))
+    pygame.display.flip()
+
     mod = 1
     #Juego normal
     game = GameInstance(dice, 1)
@@ -409,7 +397,7 @@ if __name__ == "__main__":
                 if event.key == pygame.K_RETURN:
                     try:
                         # Intentar convertir la entrada a un número
-                        number = int(text)
+                        g_iter = int(text)
                         #text = ""
                     except ValueError:
                         #text = ""
@@ -422,6 +410,13 @@ if __name__ == "__main__":
                     text += event.unicode
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if start_button.collidepoint(event.pos) and not playing:
+                    try:
+                        # Intentar convertir la entrada a un número
+                        g_iter = int(text)
+                        #text = ""
+                    except ValueError:
+                        #text = ""
+                        pass
                     playing = True
 
         pygame.draw.rect(screen, FRENCH_VIOLET, (screen_width - (margin + 180), margin, 180, square_size))  # Rectángulo superior derecho
