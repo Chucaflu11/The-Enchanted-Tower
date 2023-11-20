@@ -1,4 +1,6 @@
+from pdb import run
 from turtle import st
+from networkx import draw
 import pygame
 import random
 import sys
@@ -18,7 +20,7 @@ clock = pygame.time.Clock()
 font = pygame.font.Font(None, 22)
 start_font = pygame.font.Font(None, 30)
 
-g_iter = 0
+g_iter = 10
 
 # Camino de la bruja
 def dijkstra(graph, start, target):
@@ -166,9 +168,70 @@ class GameInstance():
         if(witch_moves > self.witch_max_moves):
             self.witch_max_moves = witch_moves
 
+    def draw_data(self):
+        iteration_text = font.render("Iteración: " + str(self.iterations), True, WHITE)
+        iteration_text_rect = iteration_text.get_rect(center=(2*margin, 0.5*margin))
+        
+        if(self.modded_game == 1):
+            hero_moves_text = font.render("H: " + str(self.hero_min_moves) + " - " + str(self.hero_max_moves), True, WHITE)
+            hero_moves_text_rect = hero_moves_text.get_rect(center=(square_size + margin*3, 0.5*margin))
+            
+            
+            witch_moves_text = font.render("B: " + str(self.witch_min_moves) + " - " + str(self.witch_max_moves), True, WHITE)
+            witch_moves_text_rect = witch_moves_text.get_rect(center=((square_size + margin*3) + hero_moves_text_rect.width + margin, 0.5*margin))
+
+            if self.iterations > 0 and self.iterations <= g_iter:
+                pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (0,0, screen_width, margin))
+        
+        elif(self.modded_game == 2):
+            hero_moves_text = font.render("H: " + str(self.hero_min_moves) + " - " + str(self.hero_max_moves), True, WHITE)
+            hero_moves_text_rect = hero_moves_text.get_rect(center=(2*margin, 1.5*margin+square_size))
+            
+            
+            witch_moves_text = font.render("B: " + str(self.witch_min_moves) + " - " + str(self.witch_max_moves), True, WHITE)
+            witch_moves_text_rect = witch_moves_text.get_rect(center=(2*margin+hero_moves_text_rect.width+margin, (1.5*margin+square_size)))
+
+            if self.iterations > 0 and self.iterations <= g_iter:
+                pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (0,margin+square_size, square_size, margin))
+        
+        elif(self.modded_game == 3):
+            hero_moves_text = font.render("H: " + str(self.hero_min_moves) + " - " + str(self.hero_max_moves), True, WHITE)
+            hero_moves_text_rect = hero_moves_text.get_rect(center=(((screen_width - 3*margin)/3)+2.5*margin, (1.5*margin+square_size)))
+            
+            
+            witch_moves_text = font.render("B: " + str(self.witch_min_moves) + " - " + str(self.witch_max_moves), True, WHITE)
+            witch_moves_text_rect = witch_moves_text.get_rect(center=((((screen_width - 3*margin)/3)+2.5*margin)+hero_moves_text_rect.width+margin, (1.5*margin+square_size)))
+
+            if self.iterations > 0 and self.iterations <= g_iter:
+                pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (square_size + 2*margin,margin+square_size, square_size, margin))
+        
+        elif(self.modded_game == 4):
+            hero_moves_text = font.render("H: " + str(self.hero_min_moves) + " - " + str(self.hero_max_moves), True, WHITE)
+            hero_moves_text_rect = hero_moves_text.get_rect(center=(((2*(screen_width - 3*margin)/3)+3.5*margin), (1.5*margin+square_size)))
+            
+            
+            witch_moves_text = font.render("B: " + str(self.witch_min_moves) + " - " + str(self.witch_max_moves), True, WHITE)
+            witch_moves_text_rect = witch_moves_text.get_rect(center=(((2*(screen_width - 3*margin)/3)+3.5*margin)+hero_moves_text_rect.width+margin, (1.5*margin+square_size)))
+
+            if self.iterations > 0 and self.iterations <= g_iter:
+                pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (2*square_size + 2*margin,margin+square_size, square_size, margin))
+
+        else:
+            return 0
+
+        if self.iterations > 0 and self.iterations <= g_iter:
+            pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (0,0, square_size, margin))
+
+        screen.blit(iteration_text, iteration_text_rect)
+        screen.blit(hero_moves_text, hero_moves_text_rect)
+        screen.blit(witch_moves_text, witch_moves_text_rect)
+
     def reset(self):
         self.iterations += 1
         self.compare_moves()
+
+        self.draw_data()
+
         self.key = random.choice(['vertex24', 'vertex28', 'vertex33'])
         if(self.total_games == 0):
             self.hero.current_position = 'vertex6'
@@ -214,17 +277,18 @@ class GameInstance():
         pygame.display.flip()
 
     def distract_witch(self):
-        distraction_prob = 0.2  # Por ejemplo, 20% de probabilidad de distraer a la bruja
-        if random.random() < distraction_prob:
+        distraction_prob = 0.7  # Por ejemplo, 20% de probabilidad de distraer a la bruja
+        r_ = random.random()
+        if r_ < distraction_prob:
             return True
         return False
 
     def game_movement(self):
         roll = random.choice(self.dice)
-
         self.draw_players()
         if(self.modded_game == 4):
-            if(not self.distract_witch()):
+            #Select some vertex to distract the witch, with the probability of the function itself
+            if(not self.distract_witch() and not (self.hero.current_position == 'vertex15' or self.hero.current_position == 'vertex41' or self.hero.current_position == 'vertex25')):
                 self.witch.current_position = self.witch.move(map, roll[0], self.key)
             
             self.hero_new_position = self.hero.move(map, roll[1], self.key)
@@ -276,7 +340,7 @@ class GameInstance():
         return self.game_running
 
 
-screen.fill(RUSSIAN_VIOLET)
+screen.fill(RUSSIAN_VIOLET_LIGHT)
 
 # Dibuja los elementos en sus posiciones
 screen.blit(map_image, (margin, margin))  # Cuadrado superior izquierdo
