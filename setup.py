@@ -45,6 +45,24 @@ dice = [
     (2, 0)
 ]
 
+dice_red_moded = [
+    (1, 4),
+    (1, 2),
+    (0, 3),
+    (1, 4),
+    (1, 2),
+    (2, 1)
+]
+
+dice_blue_moded = [
+    (2, 3),
+    (2, 1),
+    (1, 2),
+    (2, 3),
+    (2, 1),
+    (3, 0)
+]
+
 #Representación del grafo
 map = {
     'vertex1': {'vertex2'}, #witch initial point

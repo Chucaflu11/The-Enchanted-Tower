@@ -1,3 +1,4 @@
+from turtle import st
 import pygame
 import random
 import sys
@@ -7,14 +8,17 @@ from coordinates import coordinates
 from charts import create_bar_chart_image
 from setup import *
 
+from icecream import ic
 
 # Inicializa Pygame
 pygame.init()
 
 clock = pygame.time.Clock()
 
-game_running = True
-total_games = 1
+font = pygame.font.Font(None, 22)
+start_font = pygame.font.Font(None, 30)
+
+g_iter = 0
 
 # Camino de la bruja
 def dijkstra(graph, start, target):
@@ -80,7 +84,7 @@ class Hero():
                     try:
                         self.current_position = random.choice(possible_moves)
                     except IndexError:
-                        return self.current_position
+                        pass
             else:
                 print("El héroe ha llegado a una casilla sin opciones de movimiento. Juego terminado.")
                 return self.current_position
@@ -127,7 +131,7 @@ class Witch():
 
 
 class GameInstance():
-    def __init__(self):
+    def __init__(self, dice, mod):
         self.iterations = 0
         self.hero_wins = 0
         self.hero_min_moves = 0
@@ -138,11 +142,13 @@ class GameInstance():
         self.wins = [0, 0, 0, 0, 0, 0]
         self.total_games = 0
         self.game_running = True
+        self.dice = dice
+        self.modded_game = mod
 
     def init(self):
         self.key = random.choice(['vertex24', 'vertex28', 'vertex33'])
         self.hero = Hero('vertex6', 'vertex5')
-        self.witch = Hero('vertex1', 'vertex0')
+        self.witch = Witch('vertex1', 'vertex0')
 
     def compare_moves(self):
         hero_moves = self.hero.getMoves()
@@ -183,24 +189,53 @@ class GameInstance():
         pygame.display.flip()
 
     def generate_graphs(self, data):
-        pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, ((margin*2 + square_size), margin, screen_width - (margin*3 + square_size), square_size))  # Rectángulo superior derecho
-        #Size of the image for the graphics
-        bar_width = (screen_width - (margin*3 + square_size)) - 200
-        bar_height = square_size
 
-        chart_surface = create_bar_chart_image(data, bar_width, bar_height)
-        screen.blit(chart_surface, ((margin*2 + square_size), margin))
+        if(self.modded_game == 1):
+            bar_width = (screen_width - (margin*3 + square_size)) - 200
+            bar_height = square_size
+            chart_surface = create_bar_chart_image(data, bar_width, bar_height)
+            screen.blit(chart_surface, ((margin*2 + square_size), margin))
+        elif(self.modded_game == 2):
+            bar_width = (screen_width - 4 * margin) / 3
+            bar_height = screen_height-(margin*3+square_size)
+            chart_surface = create_bar_chart_image(data, bar_width, bar_height)
+            screen.blit(chart_surface, (margin, (margin*2+square_size)))
+        elif(self.modded_game == 3):
+            bar_width = (screen_width - 4 * margin) / 3
+            bar_height = screen_height-(margin*3+square_size)
+            chart_surface = create_bar_chart_image(data, bar_width, bar_height)
+            screen.blit(chart_surface, (2*margin+bar_width, margin * 2 + square_size))
+        elif(self.modded_game == 4):
+            bar_width = (screen_width - 4 * margin) / 3
+            bar_height = screen_height-(margin*3+square_size)
+            chart_surface = create_bar_chart_image(data, bar_width, bar_height)
+            screen.blit(chart_surface, (3*margin + 2*bar_width, (margin*2+square_size)))
+        
         pygame.display.flip()
 
+    def distract_witch(self):
+        distraction_prob = 0.2  # Por ejemplo, 20% de probabilidad de distraer a la bruja
+        if random.random() < distraction_prob:
+            return True
+        return False
+
     def game_movement(self):
-        roll = random.choice(dice)
+        roll = random.choice(self.dice)
 
         self.draw_players()
-        hero_new_position = self.hero.move(map, roll[1])
-        self.hero.previous_position = self.hero.current_position
-        self.hero.current_position = hero_new_position
+        if(self.modded_game == 4):
+            if(not self.distract_witch()):
+                self.witch.current_position = self.witch.move(map, roll[0], self.key)
+            
+            self.hero_new_position = self.hero.move(map, roll[1], self.key)
+            self.hero.previous_position = self.hero.current_position
+            self.hero.current_position = self.hero_new_position
+        else:
+            hero_new_position = self.hero.move(map, roll[1], self.key)
+            self.hero.previous_position = self.hero.current_position
+            self.hero.current_position = hero_new_position
 
-        self.witch.current_position = self.witch.move(map, roll[0], self.key)
+            self.witch.current_position = self.witch.move(map, roll[0], self.key)
 
     
     def reset_game_loop(self):
@@ -234,27 +269,111 @@ class GameInstance():
     def game(self):
         if(self.game_running):
             self.game_loop()
-            if(self.iterations == 50):
+            if(self.iterations == g_iter):
                 self.reset_game_loop()
+
+    def get_game_state(self):
+        return self.game_running
+
+
+screen.fill(RUSSIAN_VIOLET)
 
 # Dibuja los elementos en sus posiciones
 screen.blit(map_image, (margin, margin))  # Cuadrado superior izquierdo
 #pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, ((margin*2 + square_size), margin, screen_width - (margin*3 + square_size), square_size))  # Rectángulo superior derecho
-pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (margin, margin * 2 + square_size, (screen_width-(margin*3))/2, screen_height-(margin*3+square_size)))  # left-down rectangle
-pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (margin*2+(screen_width-(margin*3))/2, margin * 2 + square_size, (screen_width-(margin*3))/2, screen_height-(margin*3+square_size)))  # Rectángulo inferior derecho
+#pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (margin, margin * 2 + square_size, (screen_width-(margin*3))/2, screen_height-(margin*3+square_size)))  # left-down rectangle
+#pygame.draw.rect(screen, RUSSIAN_VIOLET_LIGHT, (margin*2+(screen_width-(margin*3))/2, margin * 2 + square_size, (screen_width-(margin*3))/2, screen_height-(margin*3+square_size)))  # Rectángulo inferior derecho
 pygame.display.flip()
 
-# Bucle principal
-running = True
-game = GameInstance()
-game.init()
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
 
-    if(game.iterations <= 50):
-        game.game()
+def main(mod):
+    global g_iter
+    if(mod == 1):
+        if(game.iterations <= g_iter):
+            game.game()
+        if(not game.get_game_state()):
+            mod += 1
+            g_iter = 10
+    if(mod == 2):
+        if(game_mod.iterations <= g_iter):
+            game_mod.game()
+        if(not game_mod.get_game_state()):
+            mod += 1
+            g_iter = 10
+    if(mod == 3):
+        if(game_mod2.iterations <= g_iter):
+            game_mod2.game()
+        if(not game_mod2.get_game_state()):
+            mod += 1
+            g_iter = 10
+    if(mod == 4):
+        if(game_mod3.iterations <= g_iter):
+            game_mod3.game()
+        if(not game_mod3.get_game_state()):
+            mod += 1
+            g_iter = 10
+
+
+    return mod
+
+if __name__ == "__main__":
+    mod = 1
+    #Juego normal
+    game = GameInstance(dice, 1)
+    game.init()
+    #Juego modificado dados azules
+    game_mod = GameInstance(dice_blue_moded, 2)
+    game_mod.init()
+    #Juego modificado dados rojos
+    game_mod2 = GameInstance(dice_red_moded, 3)
+    game_mod2.init()
+    #Juego modificado distracción
+    game_mod3 = GameInstance(dice, 4)
+    game_mod3.init()
+    # Bucle principal
+    running = True
+    playing = False
+    text = ""
+
+    start_button = pygame.Rect(screen_width-200, 3*margin, 145, 40)
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN and not playing:
+                if event.key == pygame.K_RETURN:
+                    try:
+                        # Intentar convertir la entrada a un número
+                        number = int(text)
+                        #text = ""
+                    except ValueError:
+                        #text = ""
+                        pass
+                elif event.key == pygame.K_BACKSPACE:
+                    # Eliminar el último carácter
+                    text = text[:-1]
+                else:
+                    # Agregar el carácter ingresado al texto
+                    text += event.unicode
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if start_button.collidepoint(event.pos) and not playing:
+                    playing = True
+
+        pygame.draw.rect(screen, FRENCH_VIOLET, (screen_width - (margin + 180), margin, 180, square_size))  # Rectángulo superior derecho
+        pygame.draw.rect(screen, HELIOTROPE, start_button)
+        start = start_font.render("Iniciar", True, WHITE)
+        text_rect = start.get_rect(center=(screen_width - (margin + 90), 3*margin+20))
+        screen.blit(start, text_rect)
+        # Renderizar el texto en el centro del rectángulo
+        input_text = font.render(text, True, WHITE)
+        text_rect = input_text.get_rect(center=(screen_width - (margin + 90), 2*margin))
+        screen.blit(input_text, text_rect)
+
+        if(playing):
+            mod = main(mod)
+
+        pygame.display.flip()
 
 # Cierra Pygame
 pygame.quit()

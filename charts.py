@@ -1,9 +1,11 @@
 import pygame
 
+from setup import WHITE, BLACK, RUSSIAN_VIOLET, RUSSIAN_VIOLET_LIGHT, PERSIAN_INDIGO, TEKHELET, FRENCH_VIOLET, AMETHYST, HELIOTROPE, MAUVE
+
 #Funcion para crear imagenes de graficos de barras
 def create_bar_chart_image(data, width, height):
     chart_image = pygame.Surface((width, height))
-    chart_image.fill((60, 9, 108))  # Rellenar el fondo con un color
+    chart_image.fill(TEKHELET)  # Rellenar el fondo con un color
 
     font = pygame.font.Font(None, 12)  # Tamaño de fuente 12
 
@@ -21,18 +23,18 @@ def create_bar_chart_image(data, width, height):
     y_scale = 10 * ((max_data // 10) + 1)  # Escala el eje Y para que el número máximo calce
 
     # Dibujar ejes X e Y
-    pygame.draw.line(chart_image, (0, 0, 0), (60, y), (width - 60, y), 2)  # Eje X
-    pygame.draw.line(chart_image, (0, 0, 0), (60, 50), (60, y), 2)  # Eje Y
+    pygame.draw.line(chart_image, BLACK, (60, y), (width - 60, y), 2)  # Eje X
+    pygame.draw.line(chart_image, BLACK, (60, 50), (60, y), 2)  # Eje Y
 
     for i in range(num_groups):
         x += i * group_space  # Ajusta el desplazamiento para cada grupo
 
         for j in range(2):  # Dos barras por grupo
             bar_height = (data[2*i + j] / y_scale) * (y - 50)  # Ajustar la altura de la barra
-            pygame.draw.rect(chart_image, (224, 170, 255), (x, y - bar_height, bar_width, bar_height))
+            pygame.draw.rect(chart_image, MAUVE, (x, y - bar_height, bar_width, bar_height))
 
             # Agregar etiqueta de datos en la parte inferior de la barra
-            text = font.render(str(data[2*i + j]), True, (0, 0, 0))
+            text = font.render(str(data[2*i + j]), True, BLACK)
             text_rect = text.get_rect()
             text_rect.center = (x + bar_width / 2, y + 10)
             chart_image.blit(text, text_rect)
@@ -54,7 +56,7 @@ def create_bar_chart_image(data, width, height):
         y_labels.append(label)
 
     for label in y_labels:
-        text = font.render(str(label), True, (0, 0, 0))
+        text = font.render(str(label), True, BLACK)
         text_rect = text.get_rect()
         text_rect.center = (30, height - 50 - (label / y_scale) * (height - 100))
         chart_image.blit(text, text_rect)
