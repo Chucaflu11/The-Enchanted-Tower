@@ -46,7 +46,7 @@ Este proyecto tiene la finalidad de un análisis sobre diferentes datos provenie
 
 Se muestran los datos de distintas maneras dentro del programa, ahora se explicarán que representa cada parte de la ventana de ejecución: <br>
 
-![Visualización de la ventana](https://imgur.com/a/sNMNZGM)
+![Visualización de la ventana](https://imgur.com/GlMGvXh)
 
 1. Encerrado en amarillo, se ve la cantidad de iteraciones que realizará el programa.
 2. Se ven 4 gráficos distintos, cada uno representando una modificación distinta, el gráfico márcado con un **1**, representa las reglas estándar del juego. Marcado con el número **2**, se ve el juego modificando los dados sumandole 1 a los números azules. En el número **3**, está la modificación de los dados, sumándole 1 a los números rojos. Finalmente en el número **4**, se ve la modificación propuesta.
