@@ -1,10 +1,9 @@
-from pdb import run
-from turtle import st
-from networkx import draw
 import pygame
 import random
 import sys
 import heapq
+
+import time
 
 from coordinates import coordinates
 from charts import create_bar_chart_image
@@ -17,11 +16,11 @@ clock = pygame.time.Clock()
 
 font = pygame.font.Font(None, 22)
 start_font = pygame.font.Font(None, 30)
+i_font = pygame.font.Font(None, 18)
 
 g_iter = 10
 
-# Camino de la bruja
-def dijkstra(graph, start, target):
+def dijkstra(graph, start, target, blocked_node=None):
     # Inicializa las estructuras de datos necesarias
     visited = set()  # Conjunto de nodos visitados
     distances = {node: float('inf') for node in graph}  # Distancias iniciales a todos los nodos como infinito
@@ -50,6 +49,10 @@ def dijkstra(graph, start, target):
             weight = 1
             distance = current_distance + weight
 
+            # Verifica si el vecino actual es el nodo bloqueado
+            if neighbor == blocked_node:
+                continue
+
             # Actualiza la distancia si encontramos un camino más corto
             if distance < distances[neighbor]:
                 distances[neighbor] = distance
@@ -59,37 +62,69 @@ def dijkstra(graph, start, target):
     # Si no se encontró un camino al nodo de destino, retornar una lista vacía
     return []
 
+
 class Hero():
     def __init__(self, start_position, start_previous_position):
         self.current_position = start_position
         self.previous_position = start_previous_position
         self.moves = 0
+        self.key_locations = ['vertex24', 'vertex28', 'vertex32']
 
-    def move(self, map, roll, key_location=None):
-        for i in range(roll):
-            if(self.current_position == key_location):
+    def move(self, graph, roll):
+        # Verifica si el héroe está en una posición donde pueda estar la llave
+        if self.current_position in self.key_locations:
+            self.key_locations.remove(self.current_position)
+
+        for _ in range(roll):
+            if self.current_position in self.key_locations:
+                self.moves += 1
                 return self.current_position
+
             self.moves += 1
-            if len(map[self.current_position]) > 0:
-                possible_moves = list(map[self.current_position])
+            if len(graph[self.current_position]) > 1:
+                # Genera los 3 caminos más cortos hacia las posibles ubicaciones de las llaves
+                shortest_paths = []
+                for key_location in self.key_locations:
+                    # Evita el nodo por el que viene (self.previous_position)
+                    blocked_node = self.previous_position if self.previous_position != self.current_position else None
+                    path = dijkstra(graph, self.current_position, key_location, blocked_node)
+                    shortest_paths.append(path)
+
+                # Elije aleatoriamente el siguiente paso entre las opciones disponibles
+                possible_moves = list(graph[self.current_position])
                 try:
                     possible_moves.remove(self.previous_position)
                 except ValueError:
                     pass
+                next_step = random.choice(possible_moves)
 
-                self.previous_position = self.current_position
-                if(self.current_position == 'vertex24'):
-                    self.current_position = 'vertex23'
-                else:
-                    try:
-                        self.current_position = random.choice(possible_moves)
-                    except IndexError:
-                        pass
+                # Vuelve a hacer los cálculos de la ruta más corta después de moverse al azar
+                shortest_paths_after_random_move = []
+                for key_location in self.key_locations:
+                    blocked_node = next_step if next_step != self.current_position else None
+                    path = dijkstra(graph, self.current_position, key_location, blocked_node)
+                    shortest_paths_after_random_move.append(path)
+
+                # Elige la ruta más corta entre las tres opciones
+                shortest_path_after_random_move = min(shortest_paths_after_random_move, key=len)
+
+                # Decide si usar la ruta directa o la ruta después de moverse al azar
+                final_path = shortest_path_after_random_move if len(shortest_path_after_random_move) < len(min(shortest_paths, key=len)) else min(shortest_paths, key=len)
+
+                # Actualiza la posición del héroe
+                if final_path:
+                    self.previous_position = self.current_position
+                    self.current_position = final_path[1]  # El siguiente nodo en el camino más corto
+
             else:
-                return self.current_position
+                # Si solo hay una opción de movimiento, avanza directamente
+                self.previous_position = self.current_position
+                self.current_position = next(iter(graph[self.current_position]))
+
         return self.current_position
 
     def getMoves(self):
+        self.key_locations = ['vertex24', 'vertex28', 'vertex32']
         move = self.moves
         self.moves = 0
         return move
@@ -143,7 +178,7 @@ class GameInstance():
         self.modded_game = mod
 
     def init(self):
-        self.key = random.choice(['vertex24', 'vertex28', 'vertex33'])
+        self.key = random.choice(['vertex24', 'vertex28', 'vertex32'])
         self.hero = Hero('vertex6', 'vertex5')
         self.witch = Witch('vertex1', 'vertex0')
 
@@ -229,7 +264,7 @@ class GameInstance():
 
         self.draw_data()
 
-        self.key = random.choice(['vertex24', 'vertex28', 'vertex33'])
+        self.key = random.choice(['vertex24', 'vertex28', 'vertex32'])
         if(self.total_games == 0):
             self.hero.current_position = 'vertex6'
             self.hero.previous_position = 'vertex5'
@@ -274,7 +309,7 @@ class GameInstance():
         pygame.display.flip()
 
     def distract_witch(self):
-        distraction_prob = 0.7  # Por ejemplo, 20% de probabilidad de distraer a la bruja
+        distraction_prob = 0.2  # Por ejemplo, 20% de probabilidad de distraer a la bruja
         r_ = random.random()
         if r_ < distraction_prob:
             return True
@@ -285,14 +320,14 @@ class GameInstance():
         self.draw_players()
         if(self.modded_game == 4):
             #Select some vertex to distract the witch, with the probability of the function itself
-            if(not self.distract_witch() and not (self.hero.current_position == 'vertex15' or self.hero.current_position == 'vertex41' or self.hero.current_position == 'vertex25')):
+            if(not self.distract_witch()):
                 self.witch.current_position = self.witch.move(map, roll[0], self.key)
             
-            self.hero_new_position = self.hero.move(map, roll[1], self.key)
+            self.hero_new_position = self.hero.move(map, roll[1])
             self.hero.previous_position = self.hero.current_position
             self.hero.current_position = self.hero_new_position
         else:
-            hero_new_position = self.hero.move(map, roll[1], self.key)
+            hero_new_position = self.hero.move(map, roll[1])
             self.hero.previous_position = self.hero.current_position
             self.hero.current_position = hero_new_position
 
@@ -313,7 +348,6 @@ class GameInstance():
             self.total_games += 1
 
     def game_loop(self):
-        self.game_movement()
         if(self.hero.current_position == self.key):
             self.hero_wins += 1
             self.wins[self.total_games * 2] = self.hero_wins
@@ -326,6 +360,7 @@ class GameInstance():
             self.wins[self.total_games * 2 + 1] = self.witch_wins
             self.generate_graphs(self.wins)
             self.reset('witch')
+        self.game_movement()
 
     def game(self):
         if(self.game_running):
@@ -357,8 +392,10 @@ def main(mod):
         if(game_mod3.iterations <= g_iter):
             game_mod3.game()
         if(not game_mod3.get_game_state()):
-            mod += 1
-
+            global playing
+            playing = False
+            mod = 1
+            print((pygame.time.get_ticks()) / 1000.0)
 
     return mod
 
@@ -398,10 +435,10 @@ if __name__ == "__main__":
                     try:
                         # Intentar convertir la entrada a un número
                         g_iter = int(text)
-                        #text = ""
                     except ValueError:
-                        #text = ""
+                        text = ""
                         pass
+                    playing = True
                 elif event.key == pygame.K_BACKSPACE:
                     # Eliminar el último carácter
                     text = text[:-1]
@@ -413,9 +450,8 @@ if __name__ == "__main__":
                     try:
                         # Intentar convertir la entrada a un número
                         g_iter = int(text)
-                        #text = ""
                     except ValueError:
-                        #text = ""
+                        text = ""
                         pass
                     playing = True
 
@@ -424,6 +460,12 @@ if __name__ == "__main__":
         start = start_font.render("Iniciar", True, WHITE)
         text_rect = start.get_rect(center=(screen_width - (margin + 90), 3*margin+20))
         screen.blit(start, text_rect)
+
+        important = i_font.render("Importante: Leer README!", True, WHITE)
+        text_rect = important.get_rect(center=(screen_width - (margin + 90), 6*margin))
+        pygame.draw.rect(screen, FRENCH_VIOLET, text_rect)
+        screen.blit(important, text_rect)
+
         # Renderizar el texto en el centro del rectángulo
         input_text = font.render(text, True, WHITE)
         text_rect = input_text.get_rect(center=(screen_width - (margin + 90), 2*margin))

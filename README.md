@@ -1,42 +1,59 @@
 # La Torre Encantada
 
-This Pygame-based game, "La Torre Encantada" (The Enchanted Tower), offers an immersive adventure set in a magical realm. The game tasks players with rescuing a princess imprisoned by a malevolent witch in an enchanted tower. To succeed, players must navigate a complex map, employing mathematical, statistical, and computational strategies to outwit the witch and save the princess.
-
-## Requirements
+## Requisitos
 
 - Python
 - Pygame
 
-## Installation
+## Instalación
 
-1. Ensure Python and Pygame are installed on your system.
-2. Clone this repository to your local machine.
-3. Navigate to the directory where you cloned the repository.
-4. Run `python main.py` to start the game.
+1. Asegúrate de que Python y Pygame estén instalados en tu sistema.
+2. Clona este repositorio en tu máquina local.
+3. Navega al directorio donde clonaste el repositorio.
+4. Ejecuta `python main.py` para iniciar el juego.
 
-## Game Details
+## Detalles del Juego
 
-### Gameplay Overview
-"La Torre Encantada" invites players into a captivating world filled with enchanting puzzles and strategic challenges. Set in a magical realm, the game presents bewitching challenges, requiring players to navigate a world filled with malevolent enchantments.
+### Visión General del Juego
 
-### Map and Elements
-The game map is a meticulously crafted environment, designed to immerse players in a mystical and challenging landscape. Featuring a variety of unique elements, the map offers a journey through magical encounters and strategic decision-making, guiding players through the gripping narrative.
+"La Torre Encantada" Simula un juego por turnos donde una Bruja encierra a la princesa del Héroe, esta bruja esconde la llave que puede ser utilizada para rescatar a la princesa. El objetivo principal para el héroe es encontrar esta llave dentro del tablero, antes de que lo haga la bruja.
 
-### Visuals and Interface
-The game boasts an aesthetically pleasing interface that complements the enchanting graphics, enhancing the overall ambiance and engagement throughout the players' quest.
+### Reglas del Juego
 
-### Project Requirements
+Existen 3 posiciones posibles donde la bruja esconde la llave al comienzo de cada partida, la bruja conoce también la posición de esta llave y avanza por turnos por el camino más corto hasta esta, el héroe por otro lado, sabe que la llave puede estar en una de las 3 posiciones, pero no exactamente en cual, esto implica que el héroe buscará en estos 3 lugares, avanzando hacia el más cercano hasta encontrar una bifurcación, donde este eligirá un camino al azar, sin la posibilidad de poder volver donde venía.
 
-This game aligns with specific project criteria to evaluate the performance and probabilities associated with the gameplay:
+### Contenidos del Juego
 
-1. **Monte Carlo Simulation:** The game implements a Monte Carlo simulation, conducting a minimum of 5,000 iterations to analyze the probabilities of success for both the hero and the witch in the game.
+El juego consta con un dado, donde los números rojos son pertenecientes al movimiento del héroe, mientras los azules, son los de la bruja. <br>
+![Dado de seis caras](assets/dados.png)
 
-2. **Distinct Starting Positions:** The simulation is run for three different scenarios: the hero starting at positions 1, 2, and 3.
+También consta de un mapa, representado por un Grafo dentro del código. <br>
+![Mapa con los vértices detallados](assets/map_graph.png)
 
-3. **Expected Results:** Analysis includes determining success cases for the hero and witch, the impact of dice modifications, and the maximum and minimum turn counts for each character.
+### Requisitos del Proyecto
 
-4. **Proposed Modification:** The project requires proposing and implementing a singular modification to the game that enhances the hero's chances of winning to over 50%. The results of this modification will be presented alongside necessary data to verify the changes.
+Este proyecto tiene la finalidad de un análisis sobre diferentes datos provenientes de las ejecuciones del juego:
 
-### On-Screen Display
+1. **Simulación de Monte Carlo:** Se simulan una cantidad dada por usuario de iteraciones (por defecto 10).
 
-The program presents each of the results clearly and precisely on-screen, using graphical representations to display the outcomes. Additionally, emphasis is placed on creativity, design, and user-friendly application throughout the project development.
+2. **Posiciones de Inicio Distintas:** La simulación se ejecuta para tres escenarios diferentes: el héroe comienza en las posiciones del grafo 6, 7 y 8, mientras que la bruja siempre inicia en el 1.
+
+3. **Resultados Esperados:** El análisis incluye determinar casos de éxito para el héroe y la bruja, el impacto de las modificaciones de los dados y el recuento máximo y mínimo de turnos para cada personaje.
+
+4. **Modificación Propuesta:** El programa incluye una última ejecución con una modificación donde la bruja se distrae con 20% de probabilad, esto significa que al momento de distraerse, la bruja no realiza su movimiento, dándole una ventaja al héroe y asegurando de que el héroe ganará más del 50% de las veces.
+
+### Pantalla de Visualización
+
+Se muestran los datos de distintas maneras dentro del programa, ahora se explicarán que representa cada parte de la ventana de ejecución: <br>
+
+![Visualización de la ventana](https://imgur.com/a/sNMNZGM)
+
+1. Encerrado en amarillo, se ve la cantidad de iteraciones que realizará el programa.
+2. Se ven 4 gráficos distintos, cada uno representando una modificación distinta, el gráfico márcado con un **1**, representa las reglas estándar del juego. Marcado con el número **2**, se ve el juego modificando los dados sumandole 1 a los números azules. En el número **3**, está la modificación de los dados, sumándole 1 a los números rojos. Finalmente en el número **4**, se ve la modificación propuesta.
+3. Arriba de cada gráfico, se puede ver una letra *H* y una letra *B*, estas representan los movimientos mínimos y máximos para la victoria de el héroe y de la bruja, esto dentro de todas las iteraciones de cada modificación del juego. El primer número corresponde a los movimientos mínimos, y el segundo, los máximos, esto es igual para el *héroe(H)* y para la *bruja(B)*.
+
+### Instrucciones de Uso
+
+1. Al ejecutar el juego, se deberán elegir la cantidad de iteraciones totales, esto simplemente es escribiendo los números con el teclado, los cuales comenzarán a salir en pantalla.
+2. Si no se elige una cantidad de iteraciones, o el número es inválido (se ingresó una letra o un símbolo), la cantidad de iteraciones quedará por defecto en 10.
+3. 10 iteraciones tardan aprox ***~5.411*** segundos, esto implica que las 5000 iteraciones originales tardarían unos ***~45.09*** minutos. Recomiendo utilizar 500 iteraciones para visualizar correctamente todos los datos en los gráficos, esto tardaría aproximadamente ***~4.51*** minutos.
