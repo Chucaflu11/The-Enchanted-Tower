@@ -1,3 +1,5 @@
+
+# Coordinates of the vertices of the graph to draw the hero and the witch.
 coordinates = {
     'vertex1': (341, 49),
     'vertex2': (299, 66),

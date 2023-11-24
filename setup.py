@@ -2,7 +2,7 @@ import pygame
 
 pygame.init()
 
-# Colores
+# Colour configuration
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
@@ -14,28 +14,32 @@ FRENCH_VIOLET = (123, 44, 191)
 AMETHYST = (157, 78, 221)
 HELIOTROPE = (199, 125, 255)
 MAUVE = (224, 170, 255)
-font = pygame.font.Font(None, 36)
+
+# Font configuration
+font = pygame.font.Font(None, 22)
+start_font = pygame.font.Font(None, 30)
+i_font = pygame.font.Font(None, 18)
 
 
-# Configuración de la pantalla
+# Screen configuration
 screen_width = 1280
 screen_height = 720
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("La torre encantada")
 
-# Tamaños y posiciones de los elementos
+# Size of the map
 square_size = 330
 margin = 40
 
-# Carga la imagen (asegúrate de tener la imagen en la misma carpeta que tu script)
+# Images
 map_image = pygame.image.load("assets\\map.jpg")
-map_image = pygame.transform.scale(map_image, (square_size, square_size))  # Ajusta el tamaño de la imagen
+map_image = pygame.transform.scale(map_image, (square_size, square_size)) # Resize image to fit the screen
 hero_image = pygame.image.load("assets\\heroe.png")
 hero_image = pygame.transform.scale(hero_image, (20, 20))
 witch_image = pygame.image.load("assets\\bruja.png")
 witch_image = pygame.transform.scale(witch_image, (20, 20))
 
-#Dado de 6 caras
+# Dice values
 dice = [
     (1, 3),
     (1, 1),
@@ -63,7 +67,7 @@ dice_blue_moded = [
     (3, 0)
 ]
 
-#Representación del grafo
+# Map configuration (graph)
 map = {
     'vertex1': {'vertex2'}, #witch initial point
     'vertex2': {'vertex1', 'vertex3'},
@@ -72,7 +76,7 @@ map = {
     'vertex5': {'vertex4', 'vertex6'}, 
     'vertex6': {'vertex5', 'vertex7'}, # Initial point '1'
     'vertex7': {'vertex6', 'vertex8'},
-    'vertex8': {'vertex9', 'vertex11', 'vertex13'}, # Initial point '3'; No se puede volver a 'vertex7'
+    'vertex8': {'vertex9', 'vertex11', 'vertex13'}, # Initial point '3'; Can't go to vertex 7
     'vertex9': {'vertex8', 'vertex10'},
     'vertex10': {'vertex9', 'vertex12', 'vertex20'},
     'vertex11': {'vertex8', 'vertex12', 'vertex18', 'vertex19'},
