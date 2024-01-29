@@ -1,7 +1,7 @@
 # La Torre Encantada
 
 ## Notas importantes
-Proyecto universitario, basado en instrucciones dadas en el ![archivo PDF](.\Trabajo 3 - Torre Encantada.pdf) entregado por mi profesor.
+Proyecto universitario, basado en instrucciones dadas en el [archivo PDF](/Trabajo 3 - Torre Encantada.pdf) entregado por mi profesor.
 
 ## Requisitos
 
